@@ -48,8 +48,12 @@ const startServer = async () => {
       transactionHash: req.body.txs[0].hash,
       ...transactionLog,
     } as TransactionEvent;
-    transactions.push(tx);
-    console.log("Received transaction", tx);
+    if (transactions.some((t) => t.transactionHash === tx.transactionHash)) {
+      console.log("Transaction already received", tx);
+    } else {
+      transactions.push(tx);
+      console.log("Received transaction", tx);
+    }
 
     res.sendStatus(200);
   });
