@@ -1,4 +1,4 @@
-import { ChainConfig } from "./types";
+import { ChainConfig } from "../types";
 
 export const chainConfig: ChainConfig  = {
     hardhat:{

@@ -1,9 +1,9 @@
 import Moralis from "moralis";
 import { ethers } from "ethers";
-import { eventABI } from "../abi";
-import { chainConfig } from "../chains";
 import { TransactionEvent } from "../types";
 import { BigNumber } from "@moralisweb3/core";
+import { eventABI } from "../constants/abi";
+import { chainConfig } from "../constants/chains";
 
 export const getAllTransactionEvents = async () => {
   const chain = process.env.CHAIN_NAME;

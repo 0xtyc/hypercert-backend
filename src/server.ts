@@ -3,6 +3,9 @@ import Moralis from "moralis";
 import { getAllTransactionEvents } from "./utils/moralis";
 import dotenv from "dotenv";
 import { TransactionEvent, TransactionSent } from "./types";
+import { BigNumber } from "@moralisweb3/core";
+import { organizations } from "./constants/organizations";
+import cors from "cors";
 
 dotenv.config();
 
@@ -10,6 +13,7 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cors());
 
 const port = process.env.PORT || 3002;
 
@@ -28,14 +32,49 @@ const startServer = async () => {
   }
 
   app.get("/transactions", (req, res) => {
+    const walletAddress = req.query.wallet
+      ? (req.query.wallet as string).toLowerCase()
+      : undefined;
+
+    // Filter transactions if wallet is provided
+    const filteredTransactions = walletAddress
+      ? transactions.filter((tx) => tx.sender === walletAddress)
+      : transactions;
+
     // Convert BigNumber to string for JSON serialization
     res.send(
-      transactions.map((tx) => ({
+      filteredTransactions.map((tx) => ({
         ...tx,
         amount: tx.amount.toString(),
         timestamp: tx.timestamp.toString(),
       })),
     );
+  });
+
+  app.get("/organizations/donations", (req, res) => {
+    const totalPerReceiver = transactions.reduce(
+      (totals: { [key: string]: BigNumber }, tx) => {
+        if (!totals[tx.receiver]) {
+          totals[tx.receiver] = BigNumber.create(0);
+        }
+        totals[tx.receiver] = totals[tx.receiver].add(tx.amount);
+        return totals;
+      },
+      {},
+    );
+
+    const donations = organizations.map((org) => ({
+      organization: org.name,
+      walletAddress: org.walletAddress,
+      amount:
+        totalPerReceiver[org.walletAddress.toLowerCase()]?.toString() || "0", // the wallet address is stored in lowercase in the transactions
+    }));
+
+    return res.send(donations);
+  });
+
+  app.get("/organizations", (req, res) => {
+    res.send(organizations);
   });
 
   // for moralis webhook

@@ -17,3 +17,9 @@ export interface TransactionSent {
   amount: BigNumber;
   timestamp: BigNumber;
 }
+
+export interface Organization {
+  name: string;
+  description: string;
+  walletAddress: string;
+}
