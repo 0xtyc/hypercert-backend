@@ -28,20 +28,29 @@ const startServer = async () => {
   }
 
   app.get("/transactions", (req, res) => {
-    res.send(transactions);
+    // Convert BigNumber to string for JSON serialization
+    res.send(
+      transactions.map((tx) => ({
+        ...tx,
+        amount: tx.amount.toString(),
+        timestamp: tx.timestamp.toString(),
+      })),
+    );
   });
 
   // for moralis webhook
   app.post("/webhook", async (req, res) => {
     const transactionLog = Moralis.Streams.parsedLogs<TransactionSent>(
       req.body,
-    )[0]; // we have only one log
+    )[0]; // only one emitted event
+
     const tx = {
       transactionHash: req.body.txs[0].hash,
       ...transactionLog,
     } as TransactionEvent;
     transactions.push(tx);
     console.log("Received transaction", tx);
+
     res.sendStatus(200);
   });
 

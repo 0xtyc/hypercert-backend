@@ -14,6 +14,6 @@ export interface TransactionEvent extends TransactionSent {
 export interface TransactionSent {
   sender: string;
   receiver: string;
-  amount: string;
-  timestamp: string;
+  amount: BigNumber;
+  timestamp: BigNumber;
 }

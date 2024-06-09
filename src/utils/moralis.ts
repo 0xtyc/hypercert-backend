@@ -3,6 +3,7 @@ import { ethers } from "ethers";
 import { eventABI } from "../abi";
 import { chainConfig } from "../chains";
 import { TransactionEvent } from "../types";
+import { BigNumber } from "@moralisweb3/core";
 
 export const getAllTransactionEvents = async () => {
   const chain = process.env.CHAIN_NAME;
@@ -21,7 +22,10 @@ export const getAllTransactionEvents = async () => {
     const eventData = event.data as any
     return {
       transactionHash: event.transaction_hash,
-      ...eventData,
+      sender: eventData.sender,
+      receiver: eventData.receiver,
+      amount: BigNumber.create(eventData.amount),
+      timestamp: BigNumber.create(eventData.timestamp),
     } as TransactionEvent;
   });
 
