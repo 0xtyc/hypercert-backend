@@ -54,10 +54,11 @@ const startServer = async () => {
   app.get("/organizations/donations", (req, res) => {
     const totalPerReceiver = transactions.reduce(
       (totals: { [key: string]: BigNumber }, tx) => {
-        if (!totals[tx.receiver]) {
-          totals[tx.receiver] = BigNumber.create(0);
+        const receiver = tx.receiver.toLowerCase();
+        if (!totals[receiver]) {
+          totals[receiver] = BigNumber.create(0);
         }
-        totals[tx.receiver] = totals[tx.receiver].add(tx.amount);
+        totals[receiver] = totals[receiver].add(tx.amount);
         return totals;
       },
       {},
@@ -79,22 +80,26 @@ const startServer = async () => {
 
   // for moralis webhook
   app.post("/webhook", async (req, res) => {
-    const transactionLog = Moralis.Streams.parsedLogs<TransactionSent>(
-      req.body,
-    )[0]; // only one emitted event
-
-    const tx = {
-      transactionHash: req.body.txs[0].hash,
-      ...transactionLog,
-    } as TransactionEvent;
-    if (transactions.some((t) => t.transactionHash === tx.transactionHash)) {
-      console.log("Transaction already received", tx);
-    } else {
-      transactions.push(tx);
-      console.log("Received transaction", tx);
-    }
-
     res.sendStatus(200);
+    try {
+      const transactionLog = Moralis.Streams.parsedLogs<TransactionSent>(
+        req.body,
+      )[0]; // only one emitted event
+
+      const tx = {
+        transactionHash: req.body.logs[0].transactionHash,
+        ...transactionLog,
+      } as TransactionEvent;
+      if (transactions.some((t) => t.transactionHash === tx.transactionHash)) {
+        console.log("Transaction already received", tx);
+      } else {
+        transactions.push(tx);
+        console.log("Received transaction", tx);
+      }
+    } catch (error) {
+      console.error(error);
+      console.log("Error parsing transaction", req.body);
+    }
   });
 
   app.listen(port, () => {
