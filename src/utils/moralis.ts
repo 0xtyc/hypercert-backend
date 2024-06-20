@@ -5,11 +5,13 @@ import { BigNumber } from "@moralisweb3/core";
 import { eventABI } from "../constants/abi";
 import { chainConfig } from "../constants/chains";
 
-export const getAllTransactionEvents = async () => {
-  const chain = process.env.CHAIN_NAME;
-  if (!chain) {
-    throw new Error("CHAIN_NAME is not defined");
-  }
+export const initializeMoralis = async (apiKey: string) => {
+  await Moralis.start({
+    apiKey: apiKey,
+  });
+};
+
+export const getAllTransactionEvents = async (chain: string) => {
   const chainId = chainConfig[chain].chainId;
   const contractAddress = chainConfig[chain].contractAddress;
   const response = await Moralis.EvmApi.events.getContractEvents({

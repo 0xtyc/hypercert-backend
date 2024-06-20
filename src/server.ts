@@ -1,110 +1,61 @@
 import express from "express";
-import Moralis from "moralis";
-import { getAllTransactionEvents } from "./utils/moralis";
-import dotenv from "dotenv";
-import { TransactionEvent, TransactionSent } from "./types";
-import { BigNumber } from "@moralisweb3/core";
-import { organizations } from "./constants/organizations";
 import cors from "cors";
+import dotenv from "dotenv";
+import { initializeMoralis } from "./utils/moralis";
+import {
+  getOrganizationsDonations,
+  getTransactionsByAddress,
+  handleWebhookRequest,
+  initTransactions,
+} from "./utils/transaction";
+import { getOrganizations } from "./constants/organizations";
 
 dotenv.config();
 
-// Create an instance of the express server
-const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+const port = process.env.PORT ? parseInt(process.env.PORT) : 3002;
 
-const port = process.env.PORT || 3002;
-
-let transactions: TransactionEvent[] = [];
-
-// Add this a startServer function that initialises Moralis
-const startServer = async () => {
-  await Moralis.start({
-    apiKey: process.env.MORALIS_API_KEY,
-  });
-
-  try {
-    transactions = await getAllTransactionEvents();
-  } catch (error) {
-    console.error(error);
+export const initializeApp = async () => {
+  const app = express();
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+  app.use(cors());
+  const apiKey = process.env.MORALIS_API_KEY;
+  const chain = process.env.CHAIN_NAME;
+  if (!apiKey) {
+    throw new Error("MORALIS_API_KEY is not defined");
   }
+  if (!chain) {
+    throw new Error("CHAIN_NAME is not defined");
+  }
+  await initializeMoralis(apiKey);
+  await initTransactions(chain);
 
   app.get("/transactions", (req, res) => {
     const walletAddress = req.query.wallet
       ? (req.query.wallet as string).toLowerCase()
-      : undefined;
-
-    // Filter transactions if wallet is provided
-    const filteredTransactions = walletAddress
-      ? transactions.filter((tx) => tx.sender === walletAddress)
-      : transactions;
-
-    // Convert BigNumber to string for JSON serialization
-    res.send(
-      filteredTransactions.map((tx) => ({
-        ...tx,
-        amount: tx.amount.toString(),
-        timestamp: tx.timestamp.toString(),
-      })),
-    );
+      : "";
+    const filteredTransactions = getTransactionsByAddress(walletAddress);
+    res.send(filteredTransactions);
   });
-
-  app.get("/organizations/donations", (req, res) => {
-    const totalPerReceiver = transactions.reduce(
-      (totals: { [key: string]: BigNumber }, tx) => {
-        const receiver = tx.receiver.toLowerCase();
-        if (!totals[receiver]) {
-          totals[receiver] = BigNumber.create(0);
-        }
-        totals[receiver] = totals[receiver].add(tx.amount);
-        return totals;
-      },
-      {},
-    );
-
-    const donations = organizations.map((org) => ({
-      organization: org.name,
-      walletAddress: org.walletAddress,
-      amount:
-        totalPerReceiver[org.walletAddress.toLowerCase()]?.toString() || "0", // the wallet address is stored in lowercase in the transactions
-    }));
-
-    return res.send(donations);
+  app.get("/organizations/donations", (_req, res) => {
+    const donations = getOrganizationsDonations();
+    res.send(donations);
   });
-
-  app.get("/organizations", (req, res) => {
-    res.send(organizations);
+  app.get("/organizations", (_req, res) => {
+    res.send(getOrganizations());
   });
-
-  // for moralis webhook
-  app.post("/webhook", async (req, res) => {
+  app.post("/webhook", (req, res) => {
     res.sendStatus(200);
-    try {
-      const transactionLog = Moralis.Streams.parsedLogs<TransactionSent>(
-        req.body,
-      )[0]; // only one emitted event
-
-      const tx = {
-        transactionHash: req.body.logs[0].transactionHash,
-        ...transactionLog,
-      } as TransactionEvent;
-      if (transactions.some((t) => t.transactionHash === tx.transactionHash)) {
-        console.log("Transaction already received", tx);
-      } else {
-        transactions.push(tx);
-        console.log("Received transaction", tx);
-      }
-    } catch (error) {
-      console.error(error);
-      console.log("Error parsing transaction", req.body);
-    }
+    handleWebhookRequest(req);
   });
 
-  app.listen(port, () => {
-    console.log(`Hypercert server is listening on port ${port}`);
-  });
+  return app;
 };
 
-startServer();
+if (process.env.NODE_ENV !== "test") {
+  initializeApp().then((app) => {
+    app.listen(port, () => {
+      console.log(`Server is listening on port ${port}`);
+    });
+  });
+}
