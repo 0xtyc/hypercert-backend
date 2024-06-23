@@ -1,12 +1,22 @@
 export const contractABI = [
   {
     inputs: [],
-    name: "TransactionLogger__InsufficientFunds",
+    name: "TransactionLogger__InsufficientOrExcessFunds",
     type: "error",
   },
   {
     inputs: [],
-    name: "TransactionLogger__sendFundsFailed",
+    name: "TransactionLogger__MininumTransferAmountNotMet",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "TransactionLogger__MismatchedReceiversAndAmounts",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "TransactionLogger__TransactionFailed",
     type: "error",
   },
   {
@@ -41,6 +51,19 @@ export const contractABI = [
     type: "event",
   },
   {
+    inputs: [],
+    name: "MINIMUM_AMOUNT",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [
       {
         internalType: "address payable",
@@ -49,6 +72,24 @@ export const contractABI = [
       },
     ],
     name: "sendFunds",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address payable[]",
+        name: "receivers",
+        type: "address[]",
+      },
+      {
+        internalType: "uint256[]",
+        name: "amounts",
+        type: "uint256[]",
+      },
+    ],
+    name: "sendMultiFunds",
     outputs: [],
     stateMutability: "payable",
     type: "function",

@@ -7,6 +7,6 @@ export const chainConfig: ChainConfig  = {
     },
     sepolia: {
         chainId: "11155111",
-        contractAddress: "0x5b4a7e08bc8B456Baf908898D13398Ab37a6aaFB",
+        contractAddress: "0x9beeBE86f6F203432fB14a89b658C7f1B38baf11",
     }
 }

@@ -2,7 +2,7 @@ import Moralis from "moralis";
 import { TransactionEvent, TransactionSent } from "../types";
 import { getAllTransactionEvents } from "./moralis";
 import { BigNumber } from "@moralisweb3/core";
-import { Request, Response } from "express";
+import { Request } from "express";
 import { getOrganizations } from "../constants/organizations";
 
 let transactions: TransactionEvent[] = [];
@@ -58,20 +58,21 @@ export const getOrganizationsDonations = () => {
 
 export const handleWebhookRequest = async (req: Request) => {
   try {
-    const transactionLog = Moralis.Streams.parsedLogs<TransactionSent>(
+    const transactionLogs = Moralis.Streams.parsedLogs<TransactionSent>(
       req.body,
-    )[0];
-
-    const tx = {
-      transactionHash: req.body.logs[0].transactionHash,
-      ...transactionLog,
-    } as TransactionEvent;
-    if (transactions.some((t) => t.transactionHash === tx.transactionHash)) {
-      console.log("Transaction already received", tx);
-    } else {
-      transactions.push(tx);
-      console.log("Received transaction", tx);
-    }
+    );
+    transactionLogs.map((log, i) => {
+      const tx = {
+        transactionHash: req.body.logs[i].transactionHash,
+        ...log,
+      } as TransactionEvent;
+      if (transactions.some((t) => t.transactionHash === tx.transactionHash)) {
+        console.log("Transaction already received", tx);
+      } else {
+        transactions.push(tx);
+        console.log("Received transaction", tx);
+      }
+    });
   } catch (error) {
     console.log(error);
     console.log("Error parsing transaction", req.body);
