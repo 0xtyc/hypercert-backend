@@ -66,7 +66,7 @@ export const handleWebhookRequest = async (req: Request) => {
         transactionHash: req.body.logs[i].transactionHash,
         ...log,
       } as TransactionEvent;
-      if (transactions.some((t) => t.transactionHash === tx.transactionHash)) {
+      if (transactions.some((t) => t.transactionHash === tx.transactionHash && t.receiver.toLowerCase() === tx.receiver.toLowerCase())) {
         console.log("Transaction already received", tx);
       } else {
         transactions.push(tx);
