@@ -7,7 +7,6 @@ import {
   initTransactions,
 } from "../utils/transaction";
 import { initializeApp } from "../server";
-import { setOrganizations } from "../constants/organizations";
 
 jest.mock("moralis", () => ({
   start: jest.fn(),
@@ -27,7 +26,7 @@ jest.mock("../utils/moralis", () => ({
   getAllTransactionEvents: jest.fn(),
 }));
 
-jest.mock("../utils/transaction.ts", () => ({
+jest.mock("../utils/transaction", () => ({
   initTransactions: jest.fn(),
   getTransactionsByAddress: jest.fn(),
   getOrganizationsDonations: jest.fn(),
@@ -46,7 +45,6 @@ const mockTransactions = [
 
 const mockDonations = [
   {
-    organization: "Test Organization",
     walletAddress: "0x123",
     amount: "100",
   },
@@ -91,26 +89,12 @@ describe("initializeApp", () => {
     expect(response.body).toEqual([]);
   });
 
-  it("should handle GET /organizations/donations", async () => {
+  it("should handle GET /donations", async () => {
     (getOrganizationsDonations as jest.Mock).mockReturnValue(mockDonations);
-    const response = await request(app).get("/organizations/donations");
+    const response = await request(app).get("/donations");
     expect(response.status).toBe(200);
     expect(getOrganizationsDonations).toHaveBeenCalled();
     expect(response.body).toEqual(mockDonations);
-  });
-
-  it("should handle GET /organizations", async () => {
-    const mockOrganizations = [
-      {
-        name: "Test Organization",
-        walletAddress: "0x123",
-        description: "Test Description",
-      },
-    ];
-    setOrganizations(mockOrganizations);
-    const response = await request(app).get("/organizations");
-    expect(response.status).toBe(200);
-    expect(response.body).toEqual(mockOrganizations);
   });
 
   it("should handle POST /webhook", async () => {

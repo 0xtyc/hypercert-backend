@@ -3,7 +3,6 @@ import { TransactionEvent, TransactionSent } from "../types";
 import { getAllTransactionEvents } from "./moralis";
 import { BigNumber } from "@moralisweb3/core";
 import { Request } from "express";
-import { getOrganizations } from "../constants/organizations";
 
 let transactions: TransactionEvent[] = [];
 
@@ -45,14 +44,11 @@ export const getOrganizationsDonations = () => {
     },
     {},
   );
-  const organizations = getOrganizations();
-  const donations = organizations.map((org) => ({
-    organization: org.name,
-    walletAddress: org.walletAddress,
-    amount:
-      totalPerReceiver[org.walletAddress.toLowerCase()]?.toString() || "0",
-  }));
 
+  const donations = Object.keys(totalPerReceiver).map((key) => ({
+    address: key,
+    amount: totalPerReceiver[key].toString(),
+  }));
   return donations;
 };
 
@@ -66,7 +62,13 @@ export const handleWebhookRequest = async (req: Request) => {
         transactionHash: req.body.logs[i].transactionHash,
         ...log,
       } as TransactionEvent;
-      if (transactions.some((t) => t.transactionHash === tx.transactionHash && t.receiver.toLowerCase() === tx.receiver.toLowerCase())) {
+      if (
+        transactions.some(
+          (t) =>
+            t.transactionHash === tx.transactionHash &&
+            t.receiver.toLowerCase() === tx.receiver.toLowerCase(),
+        )
+      ) {
         console.log("Transaction already received", tx);
       } else {
         transactions.push(tx);

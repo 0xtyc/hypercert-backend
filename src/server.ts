@@ -8,7 +8,6 @@ import {
   handleWebhookRequest,
   initTransactions,
 } from "./utils/transaction";
-import { getOrganizations } from "./constants/organizations";
 
 dotenv.config();
 
@@ -37,13 +36,11 @@ export const initializeApp = async () => {
     const filteredTransactions = getTransactionsByAddress(walletAddress);
     res.send(filteredTransactions);
   });
-  app.get("/organizations/donations", (_req, res) => {
+  app.get("/donations", (_req, res) => {
     const donations = getOrganizationsDonations();
     res.send(donations);
   });
-  app.get("/organizations", (_req, res) => {
-    res.send(getOrganizations());
-  });
+
   app.post("/webhook", (req, res) => {
     res.sendStatus(200);
     handleWebhookRequest(req);

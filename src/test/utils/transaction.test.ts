@@ -4,7 +4,6 @@ import {
   setTransactions,
 } from "../../utils/transaction";
 import { BigNumber } from "@moralisweb3/core";
-import { setOrganizations } from "../../constants/organizations";
 
 describe("Transaction", () => {
   const mockTransactions = [
@@ -27,13 +26,6 @@ describe("Transaction", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     setTransactions([...mockTransactions]);
-    setOrganizations([
-      {
-        name: "Test Organization",
-        description: "Test Description",
-        walletAddress: "0x888",
-      },
-    ]);
   });
 
   it("should return transactions for a specific wallet address", () => {
@@ -53,8 +45,7 @@ describe("Transaction", () => {
     const result = getOrganizationsDonations();
     expect(result).toEqual([
       {
-        organization: "Test Organization",
-        walletAddress: "0x888",
+        address: "0x888",
         amount: "200",
       },
     ]);
