@@ -1,7 +1,15 @@
 export const contractABI = [
   {
+    inputs: [
+      { internalType: "address", name: "_usdtTokenAddress", type: "address" },
+      { internalType: "uint256", name: "_minimumAmount", type: "uint256" },
+    ],
+    stateMutability: "nonpayable",
+    type: "constructor",
+  },
+  {
     inputs: [],
-    name: "TransactionLogger__InsufficientOrExcessFunds",
+    name: "TransactionLogger__InsufficientAllowance",
     type: "error",
   },
   {
@@ -14,11 +22,7 @@ export const contractABI = [
     name: "TransactionLogger__MismatchedReceiversAndAmounts",
     type: "error",
   },
-  {
-    inputs: [],
-    name: "TransactionLogger__TransactionFailed",
-    type: "error",
-  },
+  { inputs: [], name: "TransactionLogger__TransactionFailed", type: "error" },
   {
     anonymous: false,
     inputs: [
@@ -52,46 +56,29 @@ export const contractABI = [
   },
   {
     inputs: [],
-    name: "MINIMUM_AMOUNT",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
+    name: "minimumAmount",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
     type: "function",
   },
   {
     inputs: [
-      {
-        internalType: "address payable",
-        name: "receiver",
-        type: "address",
-      },
+      { internalType: "address", name: "receiver", type: "address" },
+      { internalType: "uint256", name: "amount", type: "uint256" },
     ],
     name: "sendFunds",
     outputs: [],
-    stateMutability: "payable",
+    stateMutability: "nonpayable",
     type: "function",
   },
   {
     inputs: [
-      {
-        internalType: "address payable[]",
-        name: "receivers",
-        type: "address[]",
-      },
-      {
-        internalType: "uint256[]",
-        name: "amounts",
-        type: "uint256[]",
-      },
+      { internalType: "address[]", name: "receivers", type: "address[]" },
+      { internalType: "uint256[]", name: "amounts", type: "uint256[]" },
     ],
     name: "sendMultiFunds",
     outputs: [],
-    stateMutability: "payable",
+    stateMutability: "nonpayable",
     type: "function",
   },
 ];
