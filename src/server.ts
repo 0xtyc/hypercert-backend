@@ -20,6 +20,8 @@ export const initializeApp = async () => {
   app.use(cors());
   const apiKey = process.env.MORALIS_API_KEY;
   const chain = process.env.CHAIN_NAME;
+  console.log(`This server is interacting with ${chain} chain`);
+
   if (!apiKey) {
     throw new Error("MORALIS_API_KEY is not defined");
   }
