@@ -3,7 +3,7 @@ import { BigNumber } from "@moralisweb3/core";
 export interface ChainConfig {
   [key: string]: {
     chainId: string;
-    contractAddress: string;
+    contractAddresses: string[];
   };
 }
 
