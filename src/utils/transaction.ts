@@ -3,7 +3,9 @@ import { TransactionEvent, TransactionSent } from "../types";
 import { getAllTransactionEvents } from "./moralis";
 import { BigNumber } from "@moralisweb3/core";
 import { Request } from "express";
+import { ethers } from "ethers";
 
+const TOKEN_DECIMALS = 6;
 let transactions: TransactionEvent[] = [];
 
 export const getTransactions = () => transactions;
@@ -32,8 +34,17 @@ export const getTransactionsByAddress = (walletAddress: string) => {
   }));
 };
 
+export const getDonations = () => {
+  const donations = transactions.map((tx) => ({
+    ...tx,
+    amount: tx.amount.toString(),
+    timestamp: tx.timestamp.toString(),
+  }));
+  return donations;
+};
+
 export const getOrganizationsDonations = () => {
-  const totalPerReceiver = transactions.reduce(
+  const amountPerReceiver = transactions.reduce(
     (totals: { [key: string]: BigNumber }, tx) => {
       const receiver = tx.receiver.toLowerCase();
       if (!totals[receiver]) {
@@ -45,11 +56,94 @@ export const getOrganizationsDonations = () => {
     {},
   );
 
-  const donations = Object.keys(totalPerReceiver).map((key) => ({
+  // square root the valid amounts, sum them up, and then square the sum to get the points
+  // transactions made with the same sender and receiver within a week are considered invalid for points
+  const pointsPerReceiver = filteredValidPointsTransactions(
+    transactions,
+  ).reduce(
+    // key: receiver address
+    (totals: { [key: string]: number }, tx) => {
+      const receiver = tx.receiver.toLowerCase();
+      if (!totals[receiver]) {
+        totals[receiver] = 0;
+      }
+      totals[receiver] += Math.sqrt(
+        parseFloat(ethers.formatUnits(tx.amount.toString(), TOKEN_DECIMALS)),
+      );
+      return totals;
+    },
+    {},
+  );
+
+  const donations = Object.keys(amountPerReceiver).map((key) => ({
     address: key,
-    amount: totalPerReceiver[key].toString(),
+    amount: amountPerReceiver[key].toString(),
+    points: (pointsPerReceiver[key] ** 2).toFixed(2), //
   }));
   return donations;
+};
+
+export const getUsersDonations = () => {
+  const amountPerSender = transactions.reduce(
+    (totals: { [key: string]: BigNumber }, tx) => {
+      const sender = tx.sender.toLowerCase();
+      if (!totals[sender]) {
+        totals[sender] = BigNumber.create(0);
+      }
+      totals[sender] = totals[sender].add(tx.amount);
+      return totals;
+    },
+    {},
+  );
+
+  const donations = Object.keys(amountPerSender).map((key) => ({
+    address: key,
+    amount: amountPerSender[key].toString(),
+  }));
+  return donations;
+};
+
+export const filteredValidPointsTransactions = (
+  transactions: TransactionEvent[],
+) => {
+  const MIN_DONATION_INTERVAL = 7 * 24 * 60 * 60 * 1000;
+  const filteredGroupTx = transactions
+    .map((tx) => {
+      return {
+        ...tx,
+        key: tx.sender + tx.receiver,
+      };
+    })
+    .sort((a, b) => {
+      return a.timestamp.toBigInt() - b.timestamp.toBigInt() > 0 ? 1 : -1;
+    })
+    .reduce((group: { [key: string]: TransactionEvent[] }, tx) => {
+      const { key, ...txData } = tx;
+      if (!group[tx.key]) {
+        group[tx.key] = [txData];
+      } else {
+        const lastDonationTime = new Date(
+          parseInt(group[tx.key].slice(-1)[0].timestamp.mul(1000).toString()),
+        );
+        const currentDonationTime = new Date(
+          parseInt(tx.timestamp.mul(1000).toString()),
+        );
+        if (
+          currentDonationTime.getTime() - lastDonationTime.getTime() >=
+          MIN_DONATION_INTERVAL
+        ) {
+          group[tx.key].push(txData);
+        }
+      }
+      return group;
+    }, {});
+
+  const filteredTx: TransactionEvent[] = [];
+  Object.keys(filteredGroupTx).forEach((key) => {
+    filteredTx.push(...filteredGroupTx[key]);
+  });
+
+  return filteredTx;
 };
 
 export const handleWebhookRequest = async (req: Request) => {

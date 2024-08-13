@@ -13,7 +13,7 @@ export const initializeMoralis = async (apiKey: string) => {
 
 export const getAllTransactionEvents = async (chain: string) => {
   const chainId = chainConfig[chain].chainId;
-  const contractAddresses = chainConfig[chain].contractAddresses
+  const contractAddresses = chainConfig[chain].contractAddresses;
   const transactionList = contractAddresses.map(async (address) => {
     const response = await Moralis.EvmApi.events.getContractEvents({
       chain: chainId,
