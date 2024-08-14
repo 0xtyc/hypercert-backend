@@ -10,6 +10,9 @@ import {
   handleWebhookRequest,
   initTransactions,
 } from "./utils/transaction";
+import db from "./db";
+import { eq } from "drizzle-orm";
+import { users } from "./db/schema/users";
 
 dotenv.config();
 
@@ -59,6 +62,48 @@ export const initializeApp = async () => {
   app.post("/webhook", (req, res) => {
     res.sendStatus(200);
     handleWebhookRequest(req);
+  });
+
+  app.put("/user", (req, res) => {
+    const address = req.query.address
+      ? (req.query.address as string).toLowerCase()
+      : "";
+    const name = req.query.name ? (req.query.name as string) : "";
+    if (!address || !name) {
+      res.status(400).send("Missing address or name");
+    }
+    db.select()
+      .from(users)
+      .where(eq(users.address, address))
+      .then((data) => {
+        if (data.length === 0) {
+          db.insert(users)
+            .values({
+              name: name,
+              address: address,
+            })
+            .then(() => {
+              console.log("Insert new user with address: ", address);
+              res.sendStatus(201);
+            });
+        } else {
+          db.update(users)
+            .set({ name: name })
+            .where(eq(users.address, address))
+            .then(() => {
+              console.log("Update user with address: ", address);
+              res.sendStatus(204);
+            });
+        }
+      });
+  });
+
+  app.get("/users", (_req, res) => {
+    db.select()
+      .from(users)
+      .then((result) => {
+        res.send(result);
+      });
   });
 
   return app;
