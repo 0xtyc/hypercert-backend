@@ -33,6 +33,5 @@ coverage/
 # Miscellaneous
 .DS_Store
 
-# database 
-*.sqlite
-*.sqlite3
+# database
+*.db
