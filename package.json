@@ -13,7 +13,6 @@
   "description": "",
   "dependencies": {
     "@moralisweb3/core": "^2.7.4",
-    "@prisma/client": "^5.15.0",
     "better-sqlite3": "^11.1.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
